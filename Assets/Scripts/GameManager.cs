@@ -4,8 +4,11 @@ using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using Photon.Pun;
+using Photon.Realtime;
+using Photon;
 
-public class GameManager : MonoBehaviour
+public class GameManager : MonoBehaviourPunCallbacks, IPunObservable
 {
     public static GameManager Instance;
     public int[] CardArray;
@@ -14,7 +17,7 @@ public class GameManager : MonoBehaviour
     public List<CardHolder> cardHolders;
     public List<Texture> textures;
     public List<ChoosedCard> ChooseCards;
-    public List<Deg> degs;
+    public int[] degs;
     public List<List<char>> RootMap;
     public List<string> StraightRoot;
     public List<string> CurveRoot;
@@ -24,6 +27,8 @@ public class GameManager : MonoBehaviour
     public TextMeshProUGUI RouteMaptext;
 
     public bool IsRotate;
+    public int nowturn=0;
+    public int PlayerId;
 
     int[] dx = { 0, 1, 0, -1 };
     int[] dy = { 1, 0, -1, 0 };
@@ -35,18 +40,20 @@ public class GameManager : MonoBehaviour
     }
     void Start()
     {
+        
+    }
+
+
+    public void initGame()
+    {
+        nowturn = 0;
         ChooseCards = new List<ChoosedCard>();
         ChooseCards.Add(new ChoosedCard());
         ChooseCards.Add(new ChoosedCard());
         ChooseCards[0].point[0] = -1; ChooseCards[0].point[1] = -1;
         ChooseCards[1].point[0] = -1; ChooseCards[1].point[1] = -1;
         IsRotate = false;
-        degs = new List<Deg>();
-        for(int i = 0; i < 8; i++)
-        {
-            degs.Add(new Deg());
-            degs[i].deg=new List<int>() { 0,0,0,0,0,0,0,0};
-        }
+        degs = new int[64];
         CardArray = new int[64];
         int crossnum = 16;
         int stnum = 18;
@@ -64,7 +71,7 @@ public class GameManager : MonoBehaviour
             nowind++;
         }
         for (int i = 0; i < curvenum; i++)
-        {   
+        {
             CardArray[nowind] = 2;
             nowind++;
         }
@@ -75,15 +82,14 @@ public class GameManager : MonoBehaviour
         }
         SetRootCard();
         RootMap = new List<List<char>>();
-        for(int i = 0; i < 24; i++)
+        for (int i = 0; i < 24; i++)
         {
             Debug.LogError(i);
-            RootMap.Add( new List<char>(){ '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#'});
+            RootMap.Add(new List<char>() { '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#' });
         }
         CardArray = CardArray.OrderBy(x => System.Guid.NewGuid()).ToArray();
         MakeGame();
     }
-
     // Update is called once per frame
     void Update()
     {
@@ -142,14 +148,14 @@ public class GameManager : MonoBehaviour
             {
                 if((i==0&&j==0)|| (i == 0 && j == 7)|| (i == 7 && j == 0)|| (i == 7 && j ==7))
                 {
-                    CardPointController cpc= cardHolders[i].CardPoints[j].AddComponent<CardPointController>();
+                    CardPointController cpc= cardHolders[i].CardPoints[j].GetComponent<CardPointController>();
                     cpc.Cardinit(textures[0], 0,i,j,true);
                     SetRoot(0, 0, i, j);
                     continue;
                 }
-                CardPointController cpc2 = cardHolders[i].CardPoints[j].AddComponent<CardPointController>();
+                CardPointController cpc2 = cardHolders[i].CardPoints[j].GetComponent<CardPointController>();
                 int deg=Random.Range(0, 4);
-                degs[i].deg[j] = deg;
+                degs[i*8+j] = deg;
                 SetRoot(CardArray[i * 8 + j], deg, i, j);
                 cpc2.Cardinit(textures[CardArray[i*8+j]], deg, i, j, false);
             }
@@ -235,6 +241,7 @@ public class GameManager : MonoBehaviour
                 if (_ok[ny,nx] == 1) continue;
                 qy.Enqueue(ny); qx.Enqueue(nx);
                 _ok[ny, nx] = 1;
+                if (ny == (23 - _y) && nx == (23 - _x)) return true;
             }
         }
         return _ok[23-_y,23-_x]==1;
@@ -242,11 +249,13 @@ public class GameManager : MonoBehaviour
 
     public void ChangeGameTurnOver()
     {
+        Debug.LogError((PhotonNetwork.LocalPlayer.ActorNumber - 1).ToString()+" P");
+        if (nowturn % 2 != PhotonNetwork.LocalPlayer.ActorNumber-1) return;
         if (IsRotate)
         {
             CardPointController cpc = cardHolders[ChooseCards[0].point[0]].CardPoints[ChooseCards[0].point[1]].GetComponent<CardPointController>();
-            degs[ChooseCards[0].point[0]].deg[ChooseCards[0].point[1]] = cpc.dir;
-            SetRoot(CardArray[ChooseCards[0].point[0] * 8 + ChooseCards[0].point[1]], degs[ChooseCards[0].point[0]].deg[ChooseCards[0].point[1]], ChooseCards[0].point[0], ChooseCards[0].point[1]);
+            degs[ChooseCards[0].point[0]*8+ChooseCards[0].point[1]] = cpc.dir;
+            SetRoot(CardArray[ChooseCards[0].point[0] * 8 + ChooseCards[0].point[1]], degs[ChooseCards[0].point[0]*8+ChooseCards[0].point[1]], ChooseCards[0].point[0], ChooseCards[0].point[1]);
             cpc.ChangeCS(CardPointController.CardState.Lock);
         }
         else if (CanChoose(-2, -2) == -1)
@@ -255,21 +264,77 @@ public class GameManager : MonoBehaviour
             int tcard = CardArray[ChooseCards[0].point[0] * 8 + ChooseCards[0].point[1]];
             CardArray[ChooseCards[0].point[0] * 8 + ChooseCards[0].point[1]] = CardArray[ChooseCards[1].point[0] * 8 + ChooseCards[1].point[1]];
             CardArray[ChooseCards[1].point[0] * 8 + ChooseCards[1].point[1]] = tcard;
-            tcard = degs[ChooseCards[1].point[0]].deg[ChooseCards[1].point[1]];
-            degs[ChooseCards[1].point[0]].deg[ChooseCards[1].point[1]] = degs[ChooseCards[0].point[0]].deg[ChooseCards[0].point[1]];
-            degs[ChooseCards[0].point[0]].deg[ChooseCards[0].point[1]] = tcard;
-            SetRoot(CardArray[ChooseCards[0].point[0] * 8 + ChooseCards[0].point[1]], degs[ChooseCards[0].point[0]].deg[ChooseCards[0].point[1]], ChooseCards[0].point[0], ChooseCards[0].point[1]);
-            SetRoot(CardArray[ChooseCards[1].point[0] * 8 + ChooseCards[1].point[1]], degs[ChooseCards[1].point[0]].deg[ChooseCards[1].point[1]], ChooseCards[1].point[0], ChooseCards[1].point[1]);
+            tcard = degs[ChooseCards[1].point[0]*8+ChooseCards[1].point[1]];
+            degs[ChooseCards[1].point[0]*8+ChooseCards[1].point[1]] = degs[ChooseCards[0].point[0]*8+ChooseCards[0].point[1]];
+            degs[ChooseCards[0].point[0]*8+ChooseCards[0].point[1]] = tcard;
+            SetRoot(CardArray[ChooseCards[0].point[0] * 8 + ChooseCards[0].point[1]], degs[ChooseCards[0].point[0]*8+ChooseCards[0].point[1]], ChooseCards[0].point[0], ChooseCards[0].point[1]);
+            SetRoot(CardArray[ChooseCards[1].point[0] * 8 + ChooseCards[1].point[1]], degs[ChooseCards[1].point[0]*8+ChooseCards[1].point[1]], ChooseCards[1].point[0], ChooseCards[1].point[1]);
             CardPointController cpcf = cardHolders[ChooseCards[0].point[0]].CardPoints[ChooseCards[0].point[1]].GetComponent<CardPointController>();
             CardPointController cpcs = cardHolders[ChooseCards[1].point[0]].CardPoints[ChooseCards[1].point[1]].GetComponent<CardPointController>();
-            cpcf.Cardinit(textures[CardArray[ChooseCards[0].point[0] * 8 + ChooseCards[0].point[1]]], degs[ChooseCards[0].point[0]].deg[ChooseCards[0].point[1]], ChooseCards[0].point[0], ChooseCards[0].point[1], true);
-            cpcs.Cardinit(textures[CardArray[ChooseCards[1].point[0] * 8 + ChooseCards[1].point[1]]], degs[ChooseCards[1].point[0]].deg[ChooseCards[1].point[1]], ChooseCards[1].point[0], ChooseCards[1].point[1], true);
+            cpcf.Cardinit(textures[CardArray[ChooseCards[0].point[0] * 8 + ChooseCards[0].point[1]]], degs[ChooseCards[0].point[0]*8+ChooseCards[0].point[1]], ChooseCards[0].point[0], ChooseCards[0].point[1], true);
+            cpcs.Cardinit(textures[CardArray[ChooseCards[1].point[0] * 8 + ChooseCards[1].point[1]]], degs[ChooseCards[1].point[0]*8+ChooseCards[1].point[1]], ChooseCards[1].point[0], ChooseCards[1].point[1], true);
         }
         UIforMap();
         ChooseCard(0, -1, -1);
         ChooseCard(1, -1, -1);
         IsRotate = false;
+        nowturn+=1;
         if (GoalCheck(1,1)) Debug.Log("ゴール！");
+        Debug.Log("ターンオーバー");
+    }
+
+    public void UpdateGame()
+    {
+        ChooseCards = new List<ChoosedCard>();
+        ChooseCards.Add(new ChoosedCard());
+        ChooseCards.Add(new ChoosedCard());
+        ChooseCards[0].point[0] = -1; ChooseCards[0].point[1] = -1;
+        ChooseCards[1].point[0] = -1; ChooseCards[1].point[1] = -1;
+        IsRotate = false;
+        SetRootCard();
+        RootMap = new List<List<char>>();
+        for (int i = 0; i < 24; i++)
+        {
+            Debug.LogError(i);
+            RootMap.Add(new List<char>() { '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#' });
+        }
+        for (int i = 0; i < 8; i++)
+        {
+            for (int j = 0; j < 8; j++)
+            {
+                
+                CardPointController cpc = cardHolders[i].CardPoints[j].GetComponent<CardPointController>();
+                int deg = degs[i*8+j];
+                SetRoot(CardArray[i * 8 + j], deg, i, j);
+                cpc.Cardinit(textures[CardArray[i * 8 + j]], deg, i, j, cpc.Locked());
+            }
+        }
+        UIforMap();
+        if (nowturn % 2 != PlayerId) return;
+        this.GetComponent<PhotonView>().RequestOwnership();
+        for (int i = 0; i < 8; i++) for (int j = 0; j < 8; j++) cardHolders[i].CardPoints[j].GetComponent<PhotonView>().RequestOwnership();
+
+
+    }
+
+    public void OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info)
+    {
+        //throw new System.NotImplementedException();
+        if (stream.IsWriting)
+        {
+            Debug.Log("here");
+            stream.SendNext(nowturn);
+            stream.SendNext(CardArray);
+            stream.SendNext(degs);
+        }
+        else
+        {
+            Debug.Log("Received");
+            nowturn = (int)stream.ReceiveNext();
+            CardArray = (int[])stream.ReceiveNext();
+            degs = (int[])stream.ReceiveNext();
+            UpdateGame();
+        }
     }
 }
 [System.Serializable]
@@ -281,8 +346,5 @@ public class ChoosedCard
 {
     public int[] point = new int[2];
 }
-public class Deg
-{
-    public List<int> deg = new List<int>(8);
-}
+
 

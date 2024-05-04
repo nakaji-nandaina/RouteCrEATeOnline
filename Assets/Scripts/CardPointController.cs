@@ -2,8 +2,11 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using Photon.Pun;
+using Photon.Realtime;
+using Photon;
 
-public class CardPointController : MonoBehaviour, IPointerClickHandler
+public class CardPointController : MonoBehaviourPunCallbacks, IPointerClickHandler,IPunObservable
 {
     // Start is called before the first frame update
     Animator anim;
@@ -51,6 +54,10 @@ public class CardPointController : MonoBehaviour, IPointerClickHandler
     void Update()
     {
         
+    }
+    public bool Locked()
+    {
+        return cs == CardState.Lock;
     }
     public void Cardinit(Texture tx,int deg,int _y,int _x,bool Lock)
     {
@@ -105,7 +112,7 @@ public class CardPointController : MonoBehaviour, IPointerClickHandler
     {
         dir = (dir + 1) % 4;
         this.gameObject.transform.eulerAngles = new Vector3(0f, CardDir[dir], 0f);
-        if (dir == GameManager.Instance.degs[cardPointY].deg[cardPointX])
+        if (dir == GameManager.Instance.degs[cardPointY*8+cardPointX])
         {
             GameManager.Instance.ChooseCard(0, -1, -1);
             GameManager.Instance.IsRotate = false;
@@ -115,7 +122,21 @@ public class CardPointController : MonoBehaviour, IPointerClickHandler
 
     public void OnPointerClick(PointerEventData eventData)
     {
-        //Debug.LogError(cardPointY.ToString() + " " + cardPointX.ToString());
+        if (GameManager.Instance.nowturn % 2 != PhotonNetwork.LocalPlayer.ActorNumber-1) return;
+        Debug.LogError(cardPointY.ToString() + " " + cardPointX.ToString());
         OnClick();
+    }
+
+    public void OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info)
+    {
+        if (stream.IsWriting)
+        {
+            //Debug.LogError("1");
+        }
+        else
+        {
+            //Debug.LogError("2");
+        }
+        //throw new System.NotImplementedException();
     }
 }

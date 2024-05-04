@@ -353,6 +353,7 @@
 "Assets/Scripts/CardPointController.cs"
 "Assets/Scripts/GameManager.cs"
 "Assets/Scripts/MoveCam.cs"
+"Assets/Scripts/NetworkManager.cs"
 "Assets/Scripts/TurnOverButton.cs"
 -langversion:9.0
 
