@@ -15,7 +15,8 @@ public class CardPointController : MonoBehaviourPunCallbacks, IPointerClickHandl
     List<float> CardDir;
     int cardPointY;
     int cardPointX;
-   public  enum CardState
+    public int stateid;
+    public  enum CardState
     {
         Null,
         Set,
@@ -23,25 +24,33 @@ public class CardPointController : MonoBehaviourPunCallbacks, IPointerClickHandl
         Rotate,
         Lock,
     }
+
+
     CardState cs;
     public void ChangeCS(CardState next)
     {
         switch (next) {
             case CardState.Set:
                 anim.SetBool("Choose", false);
+                anim.SetBool("LockCard", false);
                 anim.SetBool("SetCard", true);
                 cs = next;
+                stateid = 0;
                 break;
             case CardState.Choose:
                 anim.SetBool("Choose", true);
                 cs = next;
+                stateid = 1;
                 break;
             case CardState.Rotate:
                 cs = next;
+
+                stateid = 2;
                 break;
             case CardState.Lock:
                 anim.SetBool("LockCard", true);
                 cs = next;
+                stateid = 3;
                 break;
         }
     }
@@ -122,21 +131,46 @@ public class CardPointController : MonoBehaviourPunCallbacks, IPointerClickHandl
 
     public void OnPointerClick(PointerEventData eventData)
     {
-        if (GameManager.Instance.nowturn % 2 != PhotonNetwork.LocalPlayer.ActorNumber-1) return;
+        if (GameManager.Instance.nowturn % 2 != GameManager.Instance.PlayerId) return;
+        if (!canChange(GameManager.Instance.PlayerId)) return;
         Debug.LogError(cardPointY.ToString() + " " + cardPointX.ToString());
         OnClick();
+    }
+    
+    bool canChange(int Pid)
+    {
+        switch (Pid)
+        {
+            case 1:
+                if ((cardPointX < 2 && cardPointY < 2) || (cardPointX > 5 && cardPointY > 5)) return false;
+                break;
+            case 0:
+                if ((cardPointX >5 && cardPointY < 2) || (cardPointX < 2 && cardPointY > 5)) return false;
+                break;
+        }
+        return true;
     }
 
     public void OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info)
     {
+
         if (stream.IsWriting)
         {
-            //Debug.LogError("1");
+            stream.SendNext(stateid);
         }
         else
         {
-            //Debug.LogError("2");
+            stateid = (int)stream.ReceiveNext();
+            switch (stateid)
+            {
+                case 3:
+                    ChangeCS(CardState.Lock);
+                    break;
+                default:
+                    break;
+            }
         }
         //throw new System.NotImplementedException();
     }
+    
 }

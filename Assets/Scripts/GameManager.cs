@@ -29,23 +29,76 @@ public class GameManager : MonoBehaviourPunCallbacks, IPunObservable
     public bool IsRotate;
     public int nowturn=0;
     public int PlayerId;
+    public GameObject WinPanel;
+    public GameObject TurnUI;
 
     int[] dx = { 0, 1, 0, -1 };
     int[] dy = { 1, 0, -1, 0 };
+    public int Goaled;
 
-
+    float sendcount;
+    float sendtime = 1f;
     void Awake()
     {
         Instance = this;
     }
     void Start()
     {
+        sendtime = 1f;
+        sendcount = 0f;
+    }
+    void Update()
+    {
+        sendcount += Time.deltaTime;
+        /*
+        if (this.GetComponent<PhotonView>().IsMine)
+        {
+            this.GetComponent<PhotonView>().RPC(nameof(SyncGame),RpcTarget.Others,nowturn,CardArray,degs,Goaled);
+        }
+        */
+    }
+
+    void SyncGame(int nt,int[] ca,int[] dg,int G)
+    {
+        nowturn = nt;
+        CardArray = ca;
+        degs = dg;
+        Goaled = G;
+        UpdateGame();
+        return;
+    }
+
+    public void OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info)
+    {
+        //throw new System.NotImplementedException();
+        
+        if (stream.IsWriting)
+        {
+            //Debug.Log("here");
+            if (sendcount < sendtime) return;
+            sendcount = 0;
+            stream.SendNext(nowturn);
+            stream.SendNext(CardArray);
+            stream.SendNext(degs);
+            stream.SendNext(Goaled);
+
+        }
+        else
+        {
+            Debug.Log("Received");
+            nowturn = (int)stream.ReceiveNext();
+            CardArray = (int[])stream.ReceiveNext();
+            degs = (int[])stream.ReceiveNext();
+            Goaled = (int)stream.ReceiveNext();
+            UpdateGame();
+        }
         
     }
 
-
     public void initGame()
     {
+
+        Goaled = -1;
         nowturn = 0;
         ChooseCards = new List<ChoosedCard>();
         ChooseCards.Add(new ChoosedCard());
@@ -88,14 +141,10 @@ public class GameManager : MonoBehaviourPunCallbacks, IPunObservable
             RootMap.Add(new List<char>() { '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#' });
         }
         CardArray = CardArray.OrderBy(x => System.Guid.NewGuid()).ToArray();
+        CardArray[0] = 0;CardArray[7] = 0;CardArray[63] = 0;CardArray[56] = 0;
         MakeGame();
     }
-    // Update is called once per frame
-    void Update()
-    {
-        
-    }
-
+    
     public void SetRootCard()
     {
         StraightRoot=new List<string>();
@@ -226,7 +275,7 @@ public class GameManager : MonoBehaviourPunCallbacks, IPunObservable
         int[,] _ok = new int[24,24];
         Queue<int> qy= new Queue<int>(); 
         Queue<int> qx= new Queue<int>();
-        qy.Enqueue(1);qx.Enqueue(1);
+        qy.Enqueue(_y);qx.Enqueue(_x);
         _ok[_y, _x]= 1;
         while (qy.Count != 0)
         {
@@ -249,8 +298,8 @@ public class GameManager : MonoBehaviourPunCallbacks, IPunObservable
 
     public void ChangeGameTurnOver()
     {
-        Debug.LogError((PhotonNetwork.LocalPlayer.ActorNumber - 1).ToString()+" P");
-        if (nowturn % 2 != PhotonNetwork.LocalPlayer.ActorNumber-1) return;
+        //Debug.LogError((PhotonNetwork.LocalPlayer.ActorNumber - 1).ToString()+" P");
+        if (nowturn % 2 != PlayerId) return;
         if (IsRotate)
         {
             CardPointController cpc = cardHolders[ChooseCards[0].point[0]].CardPoints[ChooseCards[0].point[1]].GetComponent<CardPointController>();
@@ -275,16 +324,41 @@ public class GameManager : MonoBehaviourPunCallbacks, IPunObservable
             cpcs.Cardinit(textures[CardArray[ChooseCards[1].point[0] * 8 + ChooseCards[1].point[1]]], degs[ChooseCards[1].point[0]*8+ChooseCards[1].point[1]], ChooseCards[1].point[0], ChooseCards[1].point[1], true);
         }
         UIforMap();
+        sendcount = 0;
         ChooseCard(0, -1, -1);
         ChooseCard(1, -1, -1);
         IsRotate = false;
         nowturn+=1;
-        if (GoalCheck(1,1)) Debug.Log("ゴール！");
+        //for (int i = 0; i < 8; i++) for (int j = 0; j < 8; j++) cardHolders[i].CardPoints[j].GetComponent<BoxCollider>().enabled = false;
+        switch (PlayerId)
+        {
+            case 0:
+                if (GoalCheck(1, 1))
+                {
+                    Goaled = 0;
+                    WinPanel.SetActive(true);
+                    WinPanel.GetComponent<Text>().text = "Player1 Win!!";
+                    Debug.Log("ゴール！");
+                }
+                break;
+            case 1:
+                if (GoalCheck(1, 23))
+                {
+                    Goaled = 1;
+                    WinPanel.SetActive(true);
+                    WinPanel.GetComponent<Text>().text = "Player2 Win!!";
+                    Debug.Log("ゴール！");
+                }
+                break;
+        }
+        
         Debug.Log("ターンオーバー");
     }
 
     public void UpdateGame()
     {
+        if (CardArray.Length != 64) return;
+        if (degs.Length != 64) return;
         ChooseCards = new List<ChoosedCard>();
         ChooseCards.Add(new ChoosedCard());
         ChooseCards.Add(new ChoosedCard());
@@ -292,10 +366,11 @@ public class GameManager : MonoBehaviourPunCallbacks, IPunObservable
         ChooseCards[1].point[0] = -1; ChooseCards[1].point[1] = -1;
         IsRotate = false;
         SetRootCard();
+        TurnUI.GetComponent<Text>().text = "Turn: " + (nowturn+1).ToString();
         RootMap = new List<List<char>>();
         for (int i = 0; i < 24; i++)
         {
-            Debug.LogError(i);
+            //Debug.LogError(i);
             RootMap.Add(new List<char>() { '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#' });
         }
         for (int i = 0; i < 8; i++)
@@ -310,32 +385,29 @@ public class GameManager : MonoBehaviourPunCallbacks, IPunObservable
             }
         }
         UIforMap();
+        switch (Goaled)
+        {
+            case -1:
+                break;
+            case 0:
+                WinPanel.SetActive(true);
+                WinPanel.GetComponent<Text>().text = "Player1 Win!!";
+                return;
+            case 1:
+                WinPanel.SetActive(true);
+                WinPanel.GetComponent<Text>().text = "Player2 Win!!";
+                return;
+        }
         if (nowturn % 2 != PlayerId) return;
+        for (int i = 0; i < 8; i++) for (int j = 0; j < 8; j++)
+        {
+            cardHolders[i].CardPoints[j].GetComponent<PhotonView>().RequestOwnership();
+            //cardHolders[i].CardPoints[j].GetComponent<BoxCollider>().enabled = true;
+        }
         this.GetComponent<PhotonView>().RequestOwnership();
-        for (int i = 0; i < 8; i++) for (int j = 0; j < 8; j++) cardHolders[i].CardPoints[j].GetComponent<PhotonView>().RequestOwnership();
-
-
     }
 
-    public void OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info)
-    {
-        //throw new System.NotImplementedException();
-        if (stream.IsWriting)
-        {
-            Debug.Log("here");
-            stream.SendNext(nowturn);
-            stream.SendNext(CardArray);
-            stream.SendNext(degs);
-        }
-        else
-        {
-            Debug.Log("Received");
-            nowturn = (int)stream.ReceiveNext();
-            CardArray = (int[])stream.ReceiveNext();
-            degs = (int[])stream.ReceiveNext();
-            UpdateGame();
-        }
-    }
+    
 }
 [System.Serializable]
 public class CardHolder
