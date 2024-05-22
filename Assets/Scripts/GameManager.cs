@@ -7,6 +7,7 @@ using TMPro;
 using Photon.Pun;
 using Photon.Realtime;
 using Photon;
+using UnityFx.Outline;
 
 public class GameManager : MonoBehaviourPunCallbacks, IPunObservable
 {
@@ -31,7 +32,7 @@ public class GameManager : MonoBehaviourPunCallbacks, IPunObservable
     public int PlayerId;
     public GameObject WinPanel;
     public GameObject TurnUI;
-
+    bool over = false;
     int[] dx = { 0, 1, 0, -1 };
     int[] dy = { 1, 0, -1, 0 };
     public int Goaled;
@@ -296,6 +297,76 @@ public class GameManager : MonoBehaviourPunCallbacks, IPunObservable
         return _ok[23-_y,23-_x]==1;
     }
 
+    List<int> GetGoalRoot(int _y, int _x)
+    {
+        int[,] distance = new int[24, 24];
+        for (int i = 0; i < 24; i++) for (int j = 0; j < 24; j++) distance[i, j] = 10000;
+        Queue<int> qy = new Queue<int>();
+        Queue<int> qx = new Queue<int>();
+        qy.Enqueue(_y); qx.Enqueue(_x);
+        distance[_y, _x] = 0;
+        while (qy.Count != 0)
+        {
+            int cy = qy.Dequeue();
+            int cx = qx.Dequeue();
+            for (int i = 0; i < 4; i++)
+            {
+                int ny = cy + dy[i];
+                int nx = cx + dx[i];
+                if (nx < 0 || nx > 23 || ny < 0 || ny > 23) continue;
+                if (RootMap[ny][nx] == '#') continue;
+                if (distance[ny, nx] <= distance[cy,cx]+1) continue;
+                qy.Enqueue(ny); qx.Enqueue(nx);
+                distance[ny, nx] = distance[cy, cx] +1;
+            }
+        }
+        string log="";
+        for(int i = 0; i < 24; i++)
+        {
+            for (int j = 0; j < 24; j++) log += distance[i,j].ToString() + " ";
+            log += "\n";
+        }
+        Debug.LogError(log);
+        List<int> rRoot=new List<int>();
+        Queue<int> ry = new Queue<int>();
+        Queue<int> rx = new Queue<int>();
+        ry.Enqueue(23 - _y); rx.Enqueue(23 - _x);
+        rRoot.Add((23 - _y) / 3 * 8 + (23 - _x) / 3);
+        while (ry.Count != 0)
+        {
+            int cy = ry.Dequeue();
+            int cx = rx.Dequeue();
+            Debug.LogError("通った道"+cy.ToString()+" "+cx.ToString());
+            for (int i = 0; i < 4; i++)
+            {
+                int ny = cy + dy[i];
+                int nx = cx + dx[i];
+                if (nx < 0 || nx > 23 || ny < 0 || ny > 23) continue;
+                if (RootMap[ny][nx] == '#') continue;
+                if (distance[ny, nx] >= distance[cy, cx] ) continue;
+                ry.Enqueue(ny); rx.Enqueue(nx);
+                if (ny % 3 == 1 && nx % 3 == 1) rRoot.Add(ny / 3*8+nx/3);
+                break;
+            }
+        }
+        List<int> Root=new List<int>();
+        Debug.LogError("ルートサイズ" + rRoot.Count.ToString());
+        string s = "";
+        for(int i = rRoot.Count - 1; i >= 0; i--)
+        {
+            Root.Add(rRoot[i]);
+            s =s+ rRoot[i].ToString() + " ";
+            cardHolders[rRoot[i] / 8].CardPoints[rRoot[i] % 8].GetComponent<OutlineBehaviour>().enabled=true;
+            cardHolders[rRoot[i] / 8].CardPoints[rRoot[i] % 8].GetComponent<OutlineBehaviour>().OutlineColor=Color.white;
+            cardHolders[rRoot[i] / 8].CardPoints[rRoot[i] % 8].GetComponent<OutlineBehaviour>().OutlineWidth = 15;
+            cardHolders[rRoot[i] / 8].CardPoints[rRoot[i] % 8].GetComponent<OutlineBehaviour>().OutlineRenderMode = OutlineRenderFlags.Blurred;
+
+        }
+        Debug.LogError(s);
+        return Root;
+    }
+
+
     public void ChangeGameTurnOver()
     {
         //Debug.LogError((PhotonNetwork.LocalPlayer.ActorNumber - 1).ToString()+" P");
@@ -338,15 +409,17 @@ public class GameManager : MonoBehaviourPunCallbacks, IPunObservable
                     Goaled = 0;
                     WinPanel.SetActive(true);
                     WinPanel.GetComponent<Text>().text = "Player1 Win!!";
+                    GetGoalRoot(1, 1);
                     Debug.Log("ゴール！");
                 }
                 break;
             case 1:
-                if (GoalCheck(1, 23))
+                if (GoalCheck(1, 22))
                 {
                     Goaled = 1;
                     WinPanel.SetActive(true);
                     WinPanel.GetComponent<Text>().text = "Player2 Win!!";
+                    GetGoalRoot(1, 22);
                     Debug.Log("ゴール！");
                 }
                 break;
@@ -385,6 +458,7 @@ public class GameManager : MonoBehaviourPunCallbacks, IPunObservable
             }
         }
         UIforMap();
+        if (over) return;
         switch (Goaled)
         {
             case -1:
@@ -392,10 +466,14 @@ public class GameManager : MonoBehaviourPunCallbacks, IPunObservable
             case 0:
                 WinPanel.SetActive(true);
                 WinPanel.GetComponent<Text>().text = "Player1 Win!!";
+                over = true;
+                GetGoalRoot(1, 1);
                 return;
             case 1:
                 WinPanel.SetActive(true);
                 WinPanel.GetComponent<Text>().text = "Player2 Win!!";
+                over = true;
+                GetGoalRoot(1, 22);
                 return;
         }
         if (nowturn % 2 != PlayerId) return;

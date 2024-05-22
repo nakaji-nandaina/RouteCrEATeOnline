@@ -131,7 +131,7 @@ namespace Photon.Pun
                 return null;
             }
 
-            if (this.m_NextObjectIndex >= this.m_Objects.Count)
+            if (this.m_NextObjectIndex >= this.m_Objects.Count-1)
             {
                 this.m_NextObjectIndex -= this.m_ObjectsPerSample;
             }
