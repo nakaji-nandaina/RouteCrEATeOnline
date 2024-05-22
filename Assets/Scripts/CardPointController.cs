@@ -16,6 +16,9 @@ public class CardPointController : MonoBehaviourPunCallbacks, IPointerClickHandl
     int cardPointY;
     int cardPointX;
     public int stateid;
+
+    public float sendTime,sendCount;
+
     public  enum CardState
     {
         Null,
@@ -56,13 +59,14 @@ public class CardPointController : MonoBehaviourPunCallbacks, IPointerClickHandl
     }
     void Start()
     {
-       
+        sendTime = 1f;
+        sendCount = 0;
     }
 
     // Update is called once per frame
     void Update()
     {
-        
+        sendCount += Time.deltaTime;
     }
     public bool Locked()
     {
@@ -154,6 +158,7 @@ public class CardPointController : MonoBehaviourPunCallbacks, IPointerClickHandl
     public void OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info)
     {
 
+        if (sendCount > sendTime) return;
         if (stream.IsWriting)
         {
             stream.SendNext(stateid);

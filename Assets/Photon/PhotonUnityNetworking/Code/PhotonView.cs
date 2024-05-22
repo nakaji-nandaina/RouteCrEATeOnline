@@ -530,7 +530,7 @@ namespace Photon.Pun
                 for (int i = 0; i < this.ObservedComponents.Count; ++i)
                 {
                     var component = this.ObservedComponents[i];
-                    if (component != null)
+                    if (component != null && stream != null)
                         DeserializeComponent(component, stream, info);
                 }
             }
