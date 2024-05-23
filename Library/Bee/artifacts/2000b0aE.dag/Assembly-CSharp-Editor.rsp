@@ -376,6 +376,7 @@
 -r:"Library/Bee/artifacts/2000b0aE.dag/UnityFx.Outline.ref.dll"
 -r:"Library/Bee/artifacts/2000b0aE.dag/UnityFx.Outline.URP.ref.dll"
 "Assets/Photon/PhotonChat/Demos/DemoChat/Editor/ChatEditor.cs"
+"Assets/unity-chan!/Unity-chan! Model/Editor/CreateLocatorHere.cs"
 -langversion:9.0
 
 /deterministic

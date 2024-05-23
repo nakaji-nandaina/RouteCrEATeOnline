@@ -8,6 +8,7 @@ using Photon.Pun;
 using Photon.Realtime;
 using Photon;
 using UnityFx.Outline;
+using UnityChan;
 
 public class GameManager : MonoBehaviourPunCallbacks, IPunObservable
 {
@@ -39,6 +40,8 @@ public class GameManager : MonoBehaviourPunCallbacks, IPunObservable
 
     float sendcount;
     float sendtime = 1f;
+
+    public GameObject UnityChanObj;
     void Awake()
     {
         Instance = this;
@@ -360,6 +363,8 @@ public class GameManager : MonoBehaviourPunCallbacks, IPunObservable
             cardHolders[rRoot[i] / 8].CardPoints[rRoot[i] % 8].GetComponent<OutlineBehaviour>().OutlineColor=Color.white;
             cardHolders[rRoot[i] / 8].CardPoints[rRoot[i] % 8].GetComponent<OutlineBehaviour>().OutlineWidth = 15;
             cardHolders[rRoot[i] / 8].CardPoints[rRoot[i] % 8].GetComponent<OutlineBehaviour>().OutlineRenderMode = OutlineRenderFlags.Blurred;
+            //cardHolders[rRoot[i] / 8].CardPoints[rRoot[i] % 8].GetComponent<OutlineBehaviour>().OutlineRenderMode = OutlineRenderFlags.EnableAlphaTesting;
+            //cardHolders[rRoot[i] / 8].CardPoints[rRoot[i] % 8].GetComponent<OutlineBehaviour>().
 
         }
         Debug.LogError(s);
@@ -409,7 +414,7 @@ public class GameManager : MonoBehaviourPunCallbacks, IPunObservable
                     Goaled = 0;
                     WinPanel.SetActive(true);
                     WinPanel.GetComponent<Text>().text = "Player1 Win!!";
-                    GetGoalRoot(1, 1);
+                    UnityChanObj.GetComponent<UnityChanControlScriptWithRgidBody>().WalkToGoal(GetGoalRoot(1, 1));
                     Debug.Log("ÉSÅ[ÉãÅI");
                 }
                 break;
@@ -419,7 +424,7 @@ public class GameManager : MonoBehaviourPunCallbacks, IPunObservable
                     Goaled = 1;
                     WinPanel.SetActive(true);
                     WinPanel.GetComponent<Text>().text = "Player2 Win!!";
-                    GetGoalRoot(1, 22);
+                    UnityChanObj.GetComponent<UnityChanControlScriptWithRgidBody>().WalkToGoal(GetGoalRoot(1, 22));
                     Debug.Log("ÉSÅ[ÉãÅI");
                 }
                 break;

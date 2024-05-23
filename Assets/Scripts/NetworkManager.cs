@@ -8,7 +8,7 @@ using Photon.Realtime;
 using Photon;
 public class NetworkManager : MonoBehaviourPunCallbacks
 {
-    
+    public GameObject UnityChan;
     private byte maxPlayersPerRoom = 2;
     //ïÅíiÇÕê‚ëŒÇPÇ…Ç∑ÇÈ
     string gameVersion = "1";
@@ -68,14 +68,20 @@ public class NetworkManager : MonoBehaviourPunCallbacks
             Debug.Log("Im first");
             Debug.Log(PhotonNetwork.LocalPlayer.ActorNumber.ToString());
             GameManager.Instance.initGame();
+            GameObject unitychan = PhotonNetwork.Instantiate("UnityChan", new Vector3(GameManager.Instance.cardHolders[0].CardPoints[0].transform.position.x, 1, GameManager.Instance.cardHolders[0].CardPoints[0].transform.position.z), new Quaternion(0, 180, 0, 0));
+            //unitychan.transform.position = new Vector3(GameManager.Instance.cardHolders[0].CardPoints[0].transform.position.x, 1,GameManager.Instance.cardHolders[0].CardPoints[0].transform.position.z) ;
+            GameManager.Instance.UnityChanObj = unitychan;
             GameManager.Instance.PlayerId = 0;
         }
         else
         {
             Debug.Log("Im Second");
             GameManager.Instance.PlayerId = 1;
+            GameObject unitychan = PhotonNetwork.Instantiate("UnityChan", new Vector3(GameManager.Instance.cardHolders[0].CardPoints[7].transform.position.x, 1, GameManager.Instance.cardHolders[0].CardPoints[0].transform.position.z),new Quaternion(0,180,0,0));
+            GameManager.Instance.UnityChanObj = unitychan;
+            //unitychan.transform.position = new Vector3(GameManager.Instance.cardHolders[0].CardPoints[7].transform.position.x, 1, GameManager.Instance.cardHolders[0].CardPoints[0].transform.position.z);
         }
-           
+
     }
 
 }
