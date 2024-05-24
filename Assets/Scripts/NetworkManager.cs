@@ -68,6 +68,8 @@ public class NetworkManager : MonoBehaviourPunCallbacks
             Debug.Log("Im first");
             Debug.Log(PhotonNetwork.LocalPlayer.ActorNumber.ToString());
             GameManager.Instance.initGame();
+            GameManager.Instance.playerText.text = "Player 1";
+            GameManager.Instance.playerText.color = Color.blue;
             GameObject unitychan = PhotonNetwork.Instantiate("UnityChan", new Vector3(GameManager.Instance.cardHolders[0].CardPoints[0].transform.position.x, 1, GameManager.Instance.cardHolders[0].CardPoints[0].transform.position.z), new Quaternion(0, 180, 0, 0));
             //unitychan.transform.position = new Vector3(GameManager.Instance.cardHolders[0].CardPoints[0].transform.position.x, 1,GameManager.Instance.cardHolders[0].CardPoints[0].transform.position.z) ;
             GameManager.Instance.UnityChanObj = unitychan;
@@ -77,6 +79,8 @@ public class NetworkManager : MonoBehaviourPunCallbacks
         {
             Debug.Log("Im Second");
             GameManager.Instance.PlayerId = 1;
+            GameManager.Instance.playerText.text = "Player 2";
+            GameManager.Instance.playerText.color = Color.red;
             GameObject unitychan = PhotonNetwork.Instantiate("UnityChan", new Vector3(GameManager.Instance.cardHolders[0].CardPoints[7].transform.position.x, 1, GameManager.Instance.cardHolders[0].CardPoints[0].transform.position.z),new Quaternion(0,180,0,0));
             GameManager.Instance.UnityChanObj = unitychan;
             //unitychan.transform.position = new Vector3(GameManager.Instance.cardHolders[0].CardPoints[7].transform.position.x, 1, GameManager.Instance.cardHolders[0].CardPoints[0].transform.position.z);

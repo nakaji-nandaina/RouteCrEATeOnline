@@ -9,12 +9,13 @@ public class MoveCam : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        cam = GetComponent<Camera>();
+        cam = GameObject.Find("MainCamera").GetComponent<Camera>();
     }
 
     // Update is called once per frame
     void Update()
     {
+        if (GameManager.Instance.Goaled!=-1) return;
         if (Input.GetMouseButton(1))
         {
             float moveX = Input.GetAxis("Mouse X") * sensitiveMove;
@@ -31,4 +32,5 @@ public class MoveCam : MonoBehaviour
         limz = 60 < limz ? 60 : limz;
         cam.transform.position = new Vector3(limx, limy, limz);
     }
+    
 }

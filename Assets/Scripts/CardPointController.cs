@@ -83,7 +83,7 @@ public class CardPointController : MonoBehaviourPunCallbacks, IPointerClickHandl
         material.SetTexture("_MainTex", tx);
         this.gameObject.transform.eulerAngles =new Vector3(0f, CardDir[dir],0f);
         ChangeCS(CardState.Set);
-        //カードをロックかセット状態にする
+        
         if (!Lock)return;
         ChangeCS(CardState.Lock);
     }
@@ -91,17 +91,18 @@ public class CardPointController : MonoBehaviourPunCallbacks, IPointerClickHandl
     public void OnClick()
     {
         if (cs == CardState.Rotate) {
-            Debug.LogError("回転ステート");
+            Debug.LogError("Rotate");
             Rotate();
             return;
         }
         int ind = GameManager.Instance.CanChoose(cardPointY, cardPointX);
         if (ind==-1) return;
-        Debug.LogError(cardPointY.ToString() + " " + cardPointX.ToString());
+        //Debug.LogError(cardPointY.ToString() + " " + cardPointX.ToString());
         switch (cs)
         {
             case CardState.Set:
                 Debug.LogError("Set");
+                GameManager.Instance.GetComponent<AudioSource>().PlayOneShot(GameManager.Instance.clips[0]);
                 GameManager.Instance.ChooseCard(ind,cardPointY, cardPointX);
                 ChangeCS(CardState.Choose);
                 break;
@@ -123,6 +124,7 @@ public class CardPointController : MonoBehaviourPunCallbacks, IPointerClickHandl
 
     public void Rotate()
     {
+        GameManager.Instance.GetComponent<AudioSource>().PlayOneShot(GameManager.Instance.clips[1]);
         dir = (dir + 1) % 4;
         this.gameObject.transform.eulerAngles = new Vector3(0f, CardDir[dir], 0f);
         if (dir == GameManager.Instance.degs[cardPointY*8+cardPointX])
@@ -135,6 +137,7 @@ public class CardPointController : MonoBehaviourPunCallbacks, IPointerClickHandl
 
     public void OnPointerClick(PointerEventData eventData)
     {
+        if (PhotonNetwork.PlayerList.Length < 2) return;
         if (GameManager.Instance.nowturn % 2 != GameManager.Instance.PlayerId) return;
         if (!canChange(GameManager.Instance.PlayerId)) return;
         Debug.LogError(cardPointY.ToString() + " " + cardPointX.ToString());

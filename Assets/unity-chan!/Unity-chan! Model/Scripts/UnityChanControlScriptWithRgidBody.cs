@@ -15,7 +15,7 @@ namespace UnityChan
 	[RequireComponent(typeof(CapsuleCollider))]
 	[RequireComponent(typeof(Rigidbody))]
 
-	public class UnityChanControlScriptWithRgidBody : MonoBehaviourPunCallbacks
+	public class UnityChanControlScriptWithRgidBody : MonoBehaviourPunCallbacks, IPunObservable
 	{
 
 		public float animSpeed = 1.5f;				// アニメーション再生速度設定
@@ -55,9 +55,17 @@ namespace UnityChan
 		private List<int> GoalRoot;
 		int nowRoot = 0;
 
+		public Camera camera;
+		public float disC = 70;
+
+		public float sendCount, sendTime;
+		[PunRPC]
+		public bool Goaled = false;
 		// 初期化
 		void Start ()
 		{
+			sendCount = 0;
+			sendTime = 1f;
 			// Animatorコンポーネントを取得する
 			anim = GetComponent<Animator> ();
 			// CapsuleColliderコンポーネントを取得する（カプセル型コリジョン）
@@ -70,19 +78,32 @@ namespace UnityChan
 			orgVectColCenter = col.center;
 			nowRoot = 0;
 			GoalRoot = new List<int>();
+			camera = GameObject.Find("MainCamera").GetComponent<Camera>();
+			Debug.Log(camera.name);
 		}
-	
-	
 		// 以下、メイン処理.リジッドボディと絡めるので、FixedUpdate内で処理を行う.
 		void FixedUpdate ()
 		{
-			if (!photonView.IsMine) return;
-			if (GoalRoot.Count == 0) return;
+			if (this.GetComponent<PhotonView>().IsMine)
+			{
+				this.GetComponent<PhotonView>().RPC(nameof(SyncGame), RpcTarget.Others, Goaled);
+			}
+			sendCount += Time.deltaTime;
+			if (GoalRoot.Count == 0&&!Goaled) return;
+			if (!photonView.IsMine)
+			{
+				camera.transform.position = new Vector3(this.transform.position.x - disC, this.transform.position.y + 15, this.transform.position.z - disC);
+				camera.transform.rotation = Quaternion.Euler(50, 30, 0);
+				return;
+			}
+			camera.transform.position = new Vector3(this.transform.position.x - disC, this.transform.position.y + 15, this.transform.position.z - disC);
+			camera.transform.rotation = Quaternion.Euler(50, 30, 0);
 			if (nowRoot >= GoalRoot.Count)
 			{
 				anim.SetFloat("Speed", 0);
 				return;
 			}
+			Debug.Log(camera.transform.position.x.ToString() + " " + camera.transform.position.y.ToString() + " " + camera.transform.position.z.ToString() + " ");
 			int nowy = GoalRoot[nowRoot] / 8;
 			int nowx = GoalRoot[nowRoot] % 8;
 			float nowPosx = this.gameObject.transform.position.x;
@@ -226,8 +247,15 @@ namespace UnityChan
 				}
 			}
 		}
+		[PunRPC]
+		void SyncGame(bool G)
+		{
+			Goaled = G;
+			return;
+		}
 		public void WalkToGoal(List<int> root)
         {
+			Goaled=true;
 			GoalRoot = root;
 			Debug.LogError("Here");
         }
@@ -250,6 +278,21 @@ namespace UnityChan
 			// コンポーネントのHeight、Centerの初期値を戻す
 			col.height = orgColHight;
 			col.center = orgVectColCenter;
+		}
+
+		public void OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info)
+		{
+			//throw new System.NotImplementedException();
+			Debug.LogError("Here");
+			if (stream.IsWriting)
+			{
+				stream.SendNext(Goaled);
+			}
+			else
+			{
+				Goaled=(bool)stream.ReceiveNext();
+			}
+
 		}
 	}
 }

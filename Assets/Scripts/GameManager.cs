@@ -25,7 +25,6 @@ public class GameManager : MonoBehaviourPunCallbacks, IPunObservable
     public List<string> CurveRoot;
     public List<string> StopRoot;
     public List<string> CrossRoot;
-
     public TextMeshProUGUI RouteMaptext;
 
     public bool IsRotate;
@@ -33,6 +32,11 @@ public class GameManager : MonoBehaviourPunCallbacks, IPunObservable
     public int PlayerId;
     public GameObject WinPanel;
     public GameObject TurnUI;
+    public GameObject MatchingText;
+    public Text playerText;
+    public AudioClip[] clips;
+    public AudioSource audio;
+
     bool over = false;
     int[] dx = { 0, 1, 0, -1 };
     int[] dy = { 1, 0, -1, 0 };
@@ -48,12 +52,21 @@ public class GameManager : MonoBehaviourPunCallbacks, IPunObservable
     }
     void Start()
     {
+        audio=this.gameObject.AddComponent<AudioSource>();
         sendtime = 1f;
         sendcount = 0f;
     }
     void Update()
     {
         sendcount += Time.deltaTime;
+        if (PhotonNetwork.PlayerList.Length < 2)
+        {
+            MatchingText.SetActive(true);
+        }
+        else
+        {
+            MatchingText.SetActive(false);
+        }
         /*
         if (this.GetComponent<PhotonView>().IsMine)
         {
@@ -89,7 +102,7 @@ public class GameManager : MonoBehaviourPunCallbacks, IPunObservable
         }
         else
         {
-            Debug.Log("Received");
+            //Debug.Log("Received");
             nowturn = (int)stream.ReceiveNext();
             CardArray = (int[])stream.ReceiveNext();
             degs = (int[])stream.ReceiveNext();
@@ -101,7 +114,7 @@ public class GameManager : MonoBehaviourPunCallbacks, IPunObservable
 
     public void initGame()
     {
-
+        TurnUI.GetComponent<Text>().text = "Turn: 1";
         Goaled = -1;
         nowturn = 0;
         ChooseCards = new List<ChoosedCard>();
@@ -141,7 +154,7 @@ public class GameManager : MonoBehaviourPunCallbacks, IPunObservable
         RootMap = new List<List<char>>();
         for (int i = 0; i < 24; i++)
         {
-            Debug.LogError(i);
+            //Debug.LogError(i);
             RootMap.Add(new List<char>() { '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#' });
         }
         CardArray = CardArray.OrderBy(x => System.Guid.NewGuid()).ToArray();
@@ -329,7 +342,7 @@ public class GameManager : MonoBehaviourPunCallbacks, IPunObservable
             for (int j = 0; j < 24; j++) log += distance[i,j].ToString() + " ";
             log += "\n";
         }
-        Debug.LogError(log);
+        //Debug.LogError(log);
         List<int> rRoot=new List<int>();
         Queue<int> ry = new Queue<int>();
         Queue<int> rx = new Queue<int>();
@@ -339,7 +352,7 @@ public class GameManager : MonoBehaviourPunCallbacks, IPunObservable
         {
             int cy = ry.Dequeue();
             int cx = rx.Dequeue();
-            Debug.LogError("通った道"+cy.ToString()+" "+cx.ToString());
+            //Debug.LogError("通った道"+cy.ToString()+" "+cx.ToString());
             for (int i = 0; i < 4; i++)
             {
                 int ny = cy + dy[i];
@@ -353,7 +366,7 @@ public class GameManager : MonoBehaviourPunCallbacks, IPunObservable
             }
         }
         List<int> Root=new List<int>();
-        Debug.LogError("ルートサイズ" + rRoot.Count.ToString());
+        //Debug.LogError("ルートサイズ" + rRoot.Count.ToString());
         string s = "";
         for(int i = rRoot.Count - 1; i >= 0; i--)
         {
@@ -361,13 +374,13 @@ public class GameManager : MonoBehaviourPunCallbacks, IPunObservable
             s =s+ rRoot[i].ToString() + " ";
             cardHolders[rRoot[i] / 8].CardPoints[rRoot[i] % 8].GetComponent<OutlineBehaviour>().enabled=true;
             cardHolders[rRoot[i] / 8].CardPoints[rRoot[i] % 8].GetComponent<OutlineBehaviour>().OutlineColor=Color.white;
-            cardHolders[rRoot[i] / 8].CardPoints[rRoot[i] % 8].GetComponent<OutlineBehaviour>().OutlineWidth = 15;
-            cardHolders[rRoot[i] / 8].CardPoints[rRoot[i] % 8].GetComponent<OutlineBehaviour>().OutlineRenderMode = OutlineRenderFlags.Blurred;
+            cardHolders[rRoot[i] / 8].CardPoints[rRoot[i] % 8].GetComponent<OutlineBehaviour>().OutlineWidth = 5;
+            cardHolders[rRoot[i] / 8].CardPoints[rRoot[i] % 8].GetComponent<OutlineBehaviour>().OutlineRenderMode = OutlineRenderFlags.EnableDepthTesting;
             //cardHolders[rRoot[i] / 8].CardPoints[rRoot[i] % 8].GetComponent<OutlineBehaviour>().OutlineRenderMode = OutlineRenderFlags.EnableAlphaTesting;
             //cardHolders[rRoot[i] / 8].CardPoints[rRoot[i] % 8].GetComponent<OutlineBehaviour>().
 
         }
-        Debug.LogError(s);
+        //Debug.LogError(s);
         return Root;
     }
 
@@ -379,8 +392,8 @@ public class GameManager : MonoBehaviourPunCallbacks, IPunObservable
         if (IsRotate)
         {
             CardPointController cpc = cardHolders[ChooseCards[0].point[0]].CardPoints[ChooseCards[0].point[1]].GetComponent<CardPointController>();
-            degs[ChooseCards[0].point[0]*8+ChooseCards[0].point[1]] = cpc.dir;
-            SetRoot(CardArray[ChooseCards[0].point[0] * 8 + ChooseCards[0].point[1]], degs[ChooseCards[0].point[0]*8+ChooseCards[0].point[1]], ChooseCards[0].point[0], ChooseCards[0].point[1]);
+            degs[ChooseCards[0].point[0] * 8 + ChooseCards[0].point[1]] = cpc.dir;
+            SetRoot(CardArray[ChooseCards[0].point[0] * 8 + ChooseCards[0].point[1]], degs[ChooseCards[0].point[0] * 8 + ChooseCards[0].point[1]], ChooseCards[0].point[0], ChooseCards[0].point[1]);
             cpc.ChangeCS(CardPointController.CardState.Lock);
         }
         else if (CanChoose(-2, -2) == -1)
@@ -389,16 +402,17 @@ public class GameManager : MonoBehaviourPunCallbacks, IPunObservable
             int tcard = CardArray[ChooseCards[0].point[0] * 8 + ChooseCards[0].point[1]];
             CardArray[ChooseCards[0].point[0] * 8 + ChooseCards[0].point[1]] = CardArray[ChooseCards[1].point[0] * 8 + ChooseCards[1].point[1]];
             CardArray[ChooseCards[1].point[0] * 8 + ChooseCards[1].point[1]] = tcard;
-            tcard = degs[ChooseCards[1].point[0]*8+ChooseCards[1].point[1]];
-            degs[ChooseCards[1].point[0]*8+ChooseCards[1].point[1]] = degs[ChooseCards[0].point[0]*8+ChooseCards[0].point[1]];
-            degs[ChooseCards[0].point[0]*8+ChooseCards[0].point[1]] = tcard;
-            SetRoot(CardArray[ChooseCards[0].point[0] * 8 + ChooseCards[0].point[1]], degs[ChooseCards[0].point[0]*8+ChooseCards[0].point[1]], ChooseCards[0].point[0], ChooseCards[0].point[1]);
-            SetRoot(CardArray[ChooseCards[1].point[0] * 8 + ChooseCards[1].point[1]], degs[ChooseCards[1].point[0]*8+ChooseCards[1].point[1]], ChooseCards[1].point[0], ChooseCards[1].point[1]);
+            tcard = degs[ChooseCards[1].point[0] * 8 + ChooseCards[1].point[1]];
+            degs[ChooseCards[1].point[0] * 8 + ChooseCards[1].point[1]] = degs[ChooseCards[0].point[0] * 8 + ChooseCards[0].point[1]];
+            degs[ChooseCards[0].point[0] * 8 + ChooseCards[0].point[1]] = tcard;
+            SetRoot(CardArray[ChooseCards[0].point[0] * 8 + ChooseCards[0].point[1]], degs[ChooseCards[0].point[0] * 8 + ChooseCards[0].point[1]], ChooseCards[0].point[0], ChooseCards[0].point[1]);
+            SetRoot(CardArray[ChooseCards[1].point[0] * 8 + ChooseCards[1].point[1]], degs[ChooseCards[1].point[0] * 8 + ChooseCards[1].point[1]], ChooseCards[1].point[0], ChooseCards[1].point[1]);
             CardPointController cpcf = cardHolders[ChooseCards[0].point[0]].CardPoints[ChooseCards[0].point[1]].GetComponent<CardPointController>();
             CardPointController cpcs = cardHolders[ChooseCards[1].point[0]].CardPoints[ChooseCards[1].point[1]].GetComponent<CardPointController>();
-            cpcf.Cardinit(textures[CardArray[ChooseCards[0].point[0] * 8 + ChooseCards[0].point[1]]], degs[ChooseCards[0].point[0]*8+ChooseCards[0].point[1]], ChooseCards[0].point[0], ChooseCards[0].point[1], true);
-            cpcs.Cardinit(textures[CardArray[ChooseCards[1].point[0] * 8 + ChooseCards[1].point[1]]], degs[ChooseCards[1].point[0]*8+ChooseCards[1].point[1]], ChooseCards[1].point[0], ChooseCards[1].point[1], true);
+            cpcf.Cardinit(textures[CardArray[ChooseCards[0].point[0] * 8 + ChooseCards[0].point[1]]], degs[ChooseCards[0].point[0] * 8 + ChooseCards[0].point[1]], ChooseCards[0].point[0], ChooseCards[0].point[1], true);
+            cpcs.Cardinit(textures[CardArray[ChooseCards[1].point[0] * 8 + ChooseCards[1].point[1]]], degs[ChooseCards[1].point[0] * 8 + ChooseCards[1].point[1]], ChooseCards[1].point[0], ChooseCards[1].point[1], true);
         }
+        else return;
         UIforMap();
         sendcount = 0;
         ChooseCard(0, -1, -1);
