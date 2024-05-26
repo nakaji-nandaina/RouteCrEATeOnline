@@ -54,14 +54,25 @@ public class GameManager : MonoBehaviourPunCallbacks, IPunObservable
 
     public void LoadTitle()
     {
-       SceneManager.LoadScene("Title");
+        PhotonNetwork.Disconnect();
+        SceneManager.LoadScene("Title");
     }
+
+    public void DisConnectOther()
+    {
+        PhotonNetwork.Disconnect();
+        MatchingText.GetComponent<Text>().text = "Disconnected";
+        MatchingText.SetActive(true);
+        TitleButton.gameObject.SetActive(true);
+    }
+
     void Awake()
     {
-        Instance = this;
+        //Instance = this;
     }
     void Start()
     {
+        Instance = this;
         TitleButton.onClick.AddListener(()=> { LoadTitle();});
         audio=this.gameObject.AddComponent<AudioSource>();
         sendtime = 1f;

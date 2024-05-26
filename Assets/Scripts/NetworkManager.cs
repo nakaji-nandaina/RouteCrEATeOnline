@@ -59,6 +59,15 @@ public class NetworkManager : MonoBehaviourPunCallbacks
         //ログインの状態を画面上に出力
         GUILayout.Label(PhotonNetwork.NetworkClientState.ToString());
     }
+    public override void OnPlayerLeftRoom(Photon.Realtime.Player otherPlayer)
+    {
+        if (GameManager.Instance.Goaled != -1)
+        {
+            PhotonNetwork.Disconnect();
+            return;
+        }
+        GameManager.Instance.DisConnectOther();
+    }
 
     public override void OnJoinedRoom()
     {//ルームに入った時
