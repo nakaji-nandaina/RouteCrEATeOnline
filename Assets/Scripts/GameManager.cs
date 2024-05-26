@@ -81,7 +81,7 @@ public class GameManager : MonoBehaviourPunCallbacks, IPunObservable
     void Update()
     {
         sendcount += Time.deltaTime;
-        if (PhotonNetwork.PlayerList.Length < 2)
+        if (PhotonNetwork.PlayerList.Length < 2&&Goaled==-1)
         {
             MatchingText.SetActive(true);
         }
