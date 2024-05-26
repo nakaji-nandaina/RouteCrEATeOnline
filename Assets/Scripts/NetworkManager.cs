@@ -74,6 +74,8 @@ public class NetworkManager : MonoBehaviourPunCallbacks
             //unitychan.transform.position = new Vector3(GameManager.Instance.cardHolders[0].CardPoints[0].transform.position.x, 1,GameManager.Instance.cardHolders[0].CardPoints[0].transform.position.z) ;
             GameManager.Instance.UnityChanObj = unitychan;
             GameManager.Instance.PlayerId = 0;
+            MoveCam cam = GameObject.Find("MainCamera").GetComponent<MoveCam>();
+            cam.IniCam();
         }
         else
         {
@@ -83,6 +85,8 @@ public class NetworkManager : MonoBehaviourPunCallbacks
             GameManager.Instance.playerText.color = Color.red;
             GameObject unitychan = PhotonNetwork.Instantiate("UnityChan", new Vector3(GameManager.Instance.cardHolders[0].CardPoints[7].transform.position.x, 1, GameManager.Instance.cardHolders[0].CardPoints[0].transform.position.z),new Quaternion(0,180,0,0));
             GameManager.Instance.UnityChanObj = unitychan;
+            MoveCam cam = GameObject.Find("MainCamera").GetComponent<MoveCam>();
+            cam.IniCam();
             //unitychan.transform.position = new Vector3(GameManager.Instance.cardHolders[0].CardPoints[7].transform.position.x, 1, GameManager.Instance.cardHolders[0].CardPoints[0].transform.position.z);
         }
 

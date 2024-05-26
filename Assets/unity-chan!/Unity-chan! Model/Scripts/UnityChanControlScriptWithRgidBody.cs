@@ -59,11 +59,20 @@ namespace UnityChan
 		public float disC = 70;
 
 		public float sendCount, sendTime;
+
+		public float animCount, animTime;
+
 		[PunRPC]
 		public bool Goaled = false;
+		[PunRPC]
+		public bool Finished = false;
+
+
 		// 初期化
 		void Start ()
 		{
+			animTime = 10f;
+			animCount = 0;
 			sendCount = 0;
 			sendTime = 1f;
 			// Animatorコンポーネントを取得する
@@ -84,16 +93,30 @@ namespace UnityChan
 		// 以下、メイン処理.リジッドボディと絡めるので、FixedUpdate内で処理を行う.
 		void FixedUpdate ()
 		{
+			sendCount += Time.deltaTime;
 			if (this.GetComponent<PhotonView>().IsMine)
 			{
-				this.GetComponent<PhotonView>().RPC(nameof(SyncGame), RpcTarget.Others, Goaled);
+				this.GetComponent<PhotonView>().RPC(nameof(SyncGame), RpcTarget.Others, Goaled,Finished);
+                if (!Goaled) animCount += Time.deltaTime;
+				if (animCount >= animTime)
+				{
+					anim.SetFloat("Random", Random.Range(0f, 1f));
+					animCount = 0;
+					animTime = Random.Range(8f, 12f);
+					anim.SetTrigger("Rest");
+				}
 			}
-			sendCount += Time.deltaTime;
+			
 			if (GoalRoot.Count == 0&&!Goaled) return;
 			if (!photonView.IsMine)
 			{
 				camera.transform.position = new Vector3(this.transform.position.x - disC, this.transform.position.y + 15, this.transform.position.z - disC);
 				camera.transform.rotation = Quaternion.Euler(50, 30, 0);
+                if (Finished)
+                {
+					GameManager.Instance.TitleButton.gameObject.SetActive(true);
+					Debug.LogError("Finished");
+                }
 				return;
 			}
 			camera.transform.position = new Vector3(this.transform.position.x - disC, this.transform.position.y + 15, this.transform.position.z - disC);
@@ -101,6 +124,8 @@ namespace UnityChan
 			if (nowRoot >= GoalRoot.Count)
 			{
 				anim.SetFloat("Speed", 0);
+				Finished = true;
+				GameManager.Instance.TitleButton.gameObject.SetActive(true);
 				return;
 			}
 			Debug.Log(camera.transform.position.x.ToString() + " " + camera.transform.position.y.ToString() + " " + camera.transform.position.z.ToString() + " ");
@@ -248,9 +273,10 @@ namespace UnityChan
 			}
 		}
 		[PunRPC]
-		void SyncGame(bool G)
+		void SyncGame(bool G,bool F)
 		{
 			Goaled = G;
+			Finished = F;
 			return;
 		}
 		public void WalkToGoal(List<int> root)

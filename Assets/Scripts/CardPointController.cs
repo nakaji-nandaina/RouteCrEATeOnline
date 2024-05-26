@@ -140,6 +140,7 @@ public class CardPointController : MonoBehaviourPunCallbacks, IPointerClickHandl
         if (PhotonNetwork.PlayerList.Length < 2) return;
         if (GameManager.Instance.nowturn % 2 != GameManager.Instance.PlayerId) return;
         if (!canChange(GameManager.Instance.PlayerId)) return;
+        if (GameManager.Instance.prestartTime > 0) return;
         Debug.LogError(cardPointY.ToString() + " " + cardPointX.ToString());
         OnClick();
     }

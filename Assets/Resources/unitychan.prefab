@@ -3070,7 +3070,10 @@ MonoBehaviour:
   disC: 5
   sendCount: 0
   sendTime: 0
+  animCount: 0
+  animTime: 0
   Goaled: 0
+  Finished: 0
 --- !u!114 &5903291762754412016
 MonoBehaviour:
   m_ObjectHideFlags: 0

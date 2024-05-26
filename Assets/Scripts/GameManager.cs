@@ -9,6 +9,7 @@ using Photon.Realtime;
 using Photon;
 using UnityFx.Outline;
 using UnityChan;
+using UnityEngine.SceneManagement;
 
 public class GameManager : MonoBehaviourPunCallbacks, IPunObservable
 {
@@ -42,16 +43,26 @@ public class GameManager : MonoBehaviourPunCallbacks, IPunObservable
     int[] dy = { 1, 0, -1, 0 };
     public int Goaled;
 
+    public float prestartTime;
+
     float sendcount;
     float sendtime = 1f;
 
     public GameObject UnityChanObj;
+
+    public Button TitleButton;
+
+    public void LoadTitle()
+    {
+       SceneManager.LoadScene("Title");
+    }
     void Awake()
     {
         Instance = this;
     }
     void Start()
     {
+        TitleButton.onClick.AddListener(()=> { LoadTitle();});
         audio=this.gameObject.AddComponent<AudioSource>();
         sendtime = 1f;
         sendcount = 0f;
