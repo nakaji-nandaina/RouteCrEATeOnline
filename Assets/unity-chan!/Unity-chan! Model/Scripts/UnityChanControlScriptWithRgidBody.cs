@@ -308,16 +308,7 @@ namespace UnityChan
 
 		public void OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info)
 		{
-			//throw new System.NotImplementedException();
-			Debug.LogError("Here");
-			if (stream.IsWriting)
-			{
-				stream.SendNext(Goaled);
-			}
-			else
-			{
-				Goaled=(bool)stream.ReceiveNext();
-			}
+			
 
 		}
 	}

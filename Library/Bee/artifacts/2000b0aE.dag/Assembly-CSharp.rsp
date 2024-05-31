@@ -372,6 +372,7 @@
 "Assets/Scripts/GameManager.cs"
 "Assets/Scripts/MoveCam.cs"
 "Assets/Scripts/NetworkManager.cs"
+"Assets/Scripts/ResetButton.cs"
 "Assets/Scripts/TitleManager.cs"
 "Assets/Scripts/TurnOverButton.cs"
 "Assets/unity-chan!/Unity-chan! Model/Scripts/AutoBlink.cs"

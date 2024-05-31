@@ -406,7 +406,23 @@ public class GameManager : MonoBehaviourPunCallbacks, IPunObservable
         return Root;
     }
 
-
+    public void ResetSelectedCard()
+    {
+        if (nowturn % 2 != PlayerId) return;
+        if (ChooseCards[0].point[0]!=-1)
+        {
+            CardPointController cpc = cardHolders[ChooseCards[0].point[0]].CardPoints[ChooseCards[0].point[1]].GetComponent<CardPointController>();
+            cpc.Cardinit(textures[CardArray[ChooseCards[0].point[0] * 8 + ChooseCards[0].point[1]]], degs[ChooseCards[0].point[0] * 8 + ChooseCards[0].point[1]], ChooseCards[0].point[0], ChooseCards[0].point[1], false);
+        }
+        if (ChooseCards[1].point[0] != -1)
+        {
+            CardPointController cpc = cardHolders[ChooseCards[1].point[0]].CardPoints[ChooseCards[1].point[1]].GetComponent<CardPointController>();
+            cpc.Cardinit(textures[CardArray[ChooseCards[1].point[0] * 8 + ChooseCards[1].point[1]]], degs[ChooseCards[1].point[0] * 8 + ChooseCards[1].point[1]], ChooseCards[1].point[0], ChooseCards[1].point[1], false);
+        }
+        IsRotate = false;
+        ChooseCard(0, -1, -1);
+        ChooseCard(1, -1, -1);
+    }
     public void ChangeGameTurnOver()
     {
         //Debug.LogError((PhotonNetwork.LocalPlayer.ActorNumber - 1).ToString()+" P");

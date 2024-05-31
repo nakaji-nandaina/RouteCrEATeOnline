@@ -26,7 +26,7 @@ public class MoveCam : MonoBehaviour
         movecount = 0;
         startPos = cam.transform.position;
         startRotate = cam.transform.rotation.eulerAngles;
-        endPos = new Vector3(0, 60, 0);
+        endPos = new Vector3(0, 60, -10);
         endRotate = new Vector3(80, 0, 0);
     }
 

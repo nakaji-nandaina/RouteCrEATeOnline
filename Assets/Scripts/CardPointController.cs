@@ -67,6 +67,10 @@ public class CardPointController : MonoBehaviourPunCallbacks, IPointerClickHandl
     void Update()
     {
         sendCount += Time.deltaTime;
+        if (this.GetComponent<PhotonView>().IsMine)
+        {
+            this.GetComponent<PhotonView>().RPC(nameof(SyncCard), RpcTarget.Others,stateid);
+        }
     }
     public bool Locked()
     {
@@ -158,11 +162,24 @@ public class CardPointController : MonoBehaviourPunCallbacks, IPointerClickHandl
         }
         return true;
     }
-
+    [PunRPC]
+    void SyncCard(int id)
+    {
+        stateid = id;
+        switch (stateid)
+        {
+            case 3:
+                ChangeCS(CardState.Lock);
+                break;
+            default:
+                break;
+        }
+        return;
+    }
     public void OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info)
     {
 
-        if (sendCount > sendTime) return;
+        /*if (sendCount > sendTime) return;
         if (stream.IsWriting)
         {
             stream.SendNext(stateid);
@@ -178,8 +195,7 @@ public class CardPointController : MonoBehaviourPunCallbacks, IPointerClickHandl
                 default:
                     break;
             }
-        }
-        //throw new System.NotImplementedException();
+        }*/
     }
     
 }
