@@ -89,28 +89,10 @@ public class GameManager : MonoBehaviourPunCallbacks, IPunObservable
         {
             MatchingText.SetActive(false);
         }
-        /*
-        if (this.GetComponent<PhotonView>().IsMine)
-        {
-            this.GetComponent<PhotonView>().RPC(nameof(SyncGame),RpcTarget.Others,nowturn,CardArray,degs,Goaled);
-        }
-        */
-    }
-
-    void SyncGame(int nt,int[] ca,int[] dg,int G)
-    {
-        nowturn = nt;
-        CardArray = ca;
-        degs = dg;
-        Goaled = G;
-        UpdateGame();
-        return;
     }
 
     public void OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info)
-    {
-        //throw new System.NotImplementedException();
-        
+    {   
         if (stream.IsWriting)
         {
             //Debug.Log("here");
@@ -147,10 +129,10 @@ public class GameManager : MonoBehaviourPunCallbacks, IPunObservable
         IsRotate = false;
         degs = new int[64];
         CardArray = new int[64];
-        int crossnum = 16;
+        int crossnum = 20;
         int stnum = 18;
         int curvenum = 20;
-        int stopnum = 10;
+        int stopnum = 6;
         int nowind = 0;
         for (int i = 0; i < crossnum; i++)
         {
@@ -228,6 +210,8 @@ public class GameManager : MonoBehaviourPunCallbacks, IPunObservable
         ChooseCards[ind].point[1] = x;
         //Debug.LogError("•ÏX"+ChooseCards[ind].point[0].ToString()+" "+ChooseCards[ind].point[1].ToString());
     }
+
+
     void MakeGame()
     {
         for (int i = 0; i < 8; i++)
@@ -398,9 +382,6 @@ public class GameManager : MonoBehaviourPunCallbacks, IPunObservable
             cardHolders[rRoot[i] / 8].CardPoints[rRoot[i] % 8].GetComponent<OutlineBehaviour>().OutlineColor=Color.white;
             cardHolders[rRoot[i] / 8].CardPoints[rRoot[i] % 8].GetComponent<OutlineBehaviour>().OutlineWidth = 5;
             cardHolders[rRoot[i] / 8].CardPoints[rRoot[i] % 8].GetComponent<OutlineBehaviour>().OutlineRenderMode = OutlineRenderFlags.EnableDepthTesting;
-            //cardHolders[rRoot[i] / 8].CardPoints[rRoot[i] % 8].GetComponent<OutlineBehaviour>().OutlineRenderMode = OutlineRenderFlags.EnableAlphaTesting;
-            //cardHolders[rRoot[i] / 8].CardPoints[rRoot[i] % 8].GetComponent<OutlineBehaviour>().
-
         }
         //Debug.LogError(s);
         return Root;
@@ -537,7 +518,6 @@ public class GameManager : MonoBehaviourPunCallbacks, IPunObservable
         for (int i = 0; i < 8; i++) for (int j = 0; j < 8; j++)
         {
             cardHolders[i].CardPoints[j].GetComponent<PhotonView>().RequestOwnership();
-            //cardHolders[i].CardPoints[j].GetComponent<BoxCollider>().enabled = true;
         }
         this.GetComponent<PhotonView>().RequestOwnership();
     }
